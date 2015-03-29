@@ -19,9 +19,6 @@ namespace octet { namespace shaders {
     GLuint emissive_colorIndex_;
   public:
     void init() {
-      #ifdef OCTET_VITA
-        shader::init_bin(cg_shaderbin_color_v, cg_shaderbin_color_f);
-      #else
         // this is the vertex shader. main() will be called for every vertex
         // of every triangle. The output is gl_Position which is used to generate
         // 2D triangles in the rasterizer.
@@ -40,8 +37,6 @@ namespace octet { namespace shaders {
     
         // compile and link the shaders
         shader::init(vertex_shader, fragment_shader);
-      #endif
-
       // set up handles to access the uniforms.
       modelToProjectionIndex_ = glGetUniformLocation(program(), "modelToProjection");
       emissive_colorIndex_ = glGetUniformLocation(program(), "emissive_color");

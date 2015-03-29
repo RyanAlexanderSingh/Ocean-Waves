@@ -36,11 +36,6 @@ namespace octet { namespace helpers {
       mouse_center_y = y;
     }
 
-    /// set this to invert the mouse movement
-    void set_invert_mouse(bool value) {
-      invert_mouse = value;
-    }
-
     /// set the sensitivity of the mouse look
     /// this is in degrees per mouse pixel
     void set_sensitivity(float value) {
@@ -51,7 +46,7 @@ namespace octet { namespace helpers {
     void update(mat4t &cameraToWorld) {
       cameraToWorld.x() = vec4(1, 0, 0, 0);
       cameraToWorld.y() = vec4(0, 1, 0, 0);
-      cameraToWorld.z() = vec4(0, 0, 1, 0);
+      cameraToWorld.z() = vec4(0, 0, -1, 0);
 
       int rx = 0, ry = 0;
       the_app->get_absolute_mouse_movement(rx, ry);
@@ -63,7 +58,7 @@ namespace octet { namespace helpers {
       float angle_y = (float)(mouse_center_y - ry) * sensitivity;
       angle_y = std::max(-90.0f, std::min(angle_y, 90.0f));
       cameraToWorld.rotateY(angle_x);
-      cameraToWorld.rotateX(invert_mouse ? -angle_y : angle_y);
+      cameraToWorld.rotateX(angle_y);
       
     }
   };

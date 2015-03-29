@@ -9,21 +9,31 @@ namespace octet {
   class Ocean : public app {
     // scene for drawing box
     ref<visual_scene> app_scene;
+    ref<material> custom_mat;
+
   public:
     /// this is called when we construct the class before everything is initialised.
     Ocean(int argc, char **argv) : app(argc, argv) {
     }
+
+    void skybox() {
+
+    }
+
 
     /// this is called once OpenGL is initialized
     void app_init() {
       app_scene =  new visual_scene();
       app_scene->create_default_camera_and_lights();
 
-      material *red = new material(vec4(1, 0, 0, 1));
+      //param_shader *shader = new param_shader("shaders/default.vs", "shaders/spots.fs");
+      material *mat = new material(new image("assets/playerShip_uv.jpg"));
+
+      /*material *red = new material(vec4(1, 0, 0, 1));
       mesh_box *box = new mesh_box(vec3(4));
       scene_node *node = new scene_node();
       app_scene->add_child(node);
-      app_scene->add_mesh_instance(new mesh_instance(node, box, red));
+      app_scene->add_mesh_instance(new mesh_instance(node, box, mat));*/
     }
 
     /// this is called to draw the world
@@ -38,10 +48,10 @@ namespace octet {
       // draw the scene
       app_scene->render((float)vx / vy);
 
-      // tumble the box  (there is only one mesh instance)
-      scene_node *node = app_scene->get_mesh_instance(0)->get_node();
-      node->rotate(1, vec3(1, 0, 0));
-      node->rotate(1, vec3(0, 1, 0));
+      //// tumble the box  (there is only one mesh instance)
+      //scene_node *node = app_scene->get_mesh_instance(0)->get_node();
+      //node->rotate(1, vec3(1, 0, 0));
+      //node->rotate(1, vec3(0, 1, 0));
     }
   };
 }
