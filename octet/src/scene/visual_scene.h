@@ -454,6 +454,14 @@ namespace octet { namespace scene {
       return inst;
     }
 
+    void pop_mesh_instance()
+    {
+      if (mesh_instances.size()>0)
+      {
+        mesh_instances.pop_back();
+      }
+    }
+
     animation_instance *add_animation_instance(animation_instance *inst) {
       animation_instances.push_back(inst);
       return inst;

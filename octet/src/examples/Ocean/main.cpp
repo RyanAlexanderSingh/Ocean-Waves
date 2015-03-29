@@ -1,17 +1,20 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-// (C) Andy Thomason 2012-2014
+// (C) Ryan Singh and Himanshu Chablani
 //
 // Modular Framework for OpenGLES2 rendering on multiple platforms.
-//
-// Text overlay
 //
 
 #define OCTET_BULLET 1
 
 #include "../../octet.h"
 
-#include "Ocean.h"
+#include "UI.h"
+#include "sky_box.h"
+#include "bmp_image.h"
+#include "perlin.h"
+#include "inputs.h"
+#include "ocean_waves.h"
 
 /// Create a box with octet
 int main(int argc, char **argv) {
@@ -19,7 +22,7 @@ int main(int argc, char **argv) {
   octet::app::init_all(argc, argv);
 
   // our application.
-  octet::Ocean app(argc, argv);
+  octet::ocean_waves app(argc, argv);
   app.init();
 
   // open windows
