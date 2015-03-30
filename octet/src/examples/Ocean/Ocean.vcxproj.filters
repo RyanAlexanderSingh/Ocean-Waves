@@ -428,10 +428,6 @@
       <Filter>containers</Filter>
     </ClInclude>
     <ClInclude Include="UI.h" />
-    <ClInclude Include="sky_box.h" />
-    <ClInclude Include="terrain_gen.h" />
-    <ClInclude Include="perlin.h" />
-    <ClInclude Include="bmp_image.h" />
     <ClInclude Include="inputs.h" />
     <ClInclude Include="ocean_waves.h" />
   </ItemGroup>
