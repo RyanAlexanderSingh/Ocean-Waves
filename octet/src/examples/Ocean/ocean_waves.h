@@ -4,9 +4,12 @@
 //
 // Modular Framework for OpenGLES2 rendering on multiple platforms.
 //
+#include <math.h>
 
 #ifndef OCEAN_WAVES_H_INCLUDED
 #define OCEAN_WAVES_H_INCLUDED
+
+#define PI 3.14159265358979323846f  /* pi */
 
 namespace octet {
 
@@ -15,7 +18,6 @@ namespace octet {
 
     inputs inputs;
     UI Game_UI;
-    sky_box Sky_Box;
 
     // scene for drawing box
     ref<visual_scene> app_scene;
@@ -59,9 +61,9 @@ namespace octet {
     void setup_camera()
     {
       mat4t &camera_mat = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
-      camera_mat.translate(150, 150, 150);
-      camera_mat.rotateY(-90);
-      camera_mat.rotateX(0);
+      camera_mat.translate(0, 150, 150);
+      //camera_mat.rotateY(90);
+      camera_mat.rotateX(-30);
     }
 
   public:
@@ -109,7 +111,7 @@ namespace octet {
       mat4t &camera = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
       //run key_presses loop to check for inputs
       inputs.key_presses(camera);
-      inputs.mouse_control(camera);
+      //inputs.mouse_control(camera);
 
       Sky_Box.DayNightCycle(app_scene);
       Game_UI.updateUI(vx, vy);
