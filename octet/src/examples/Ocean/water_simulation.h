@@ -6,21 +6,22 @@
 //
 #include <math.h>
 
-#ifndef OCEAN_WAVES_H_INCLUDED
-#define OCEAN_WAVES_H_INCLUDED
+#ifndef WATER_SIMULATION_H_INCLUDED
+#define WATER_SIMULATION_H_INCLUDED
 
 #define PI 3.14159265358979323846f  /* pi */
 
 namespace octet {
 
   /// Scene containing a box with octet.
-  class ocean_waves : public app {
+  class water_simulation : public app {
 
     inputs inputs;
     UI Game_UI;
 
     // scene for drawing box
     ref<visual_scene> app_scene;
+    ref<wave_mesh> wave_geometry;
 
     struct example_geometry_source : mesh_terrain::geometry_source {
       mesh::vertex vertex(
@@ -62,7 +63,7 @@ namespace octet {
 
   public:
     /// this is called when we construct the class before everything is initialised.
-    ocean_waves(int argc, char **argv) : app(argc, argv) {
+    water_simulation(int argc, char **argv) : app(argc, argv) {
     }
 
     /// this is called once OpenGL is initialized
@@ -78,11 +79,14 @@ namespace octet {
 
       inputs.init(this);
 
-      mat4t mat;
+      wave_geometry = new wave_mesh();
+      wave_geometry->init();
 
+      mat4t mat;
       mat.loadIdentity();
       mat.translate(0, -0.5f, 0);
 
+      //example terrain geometry
       app_scene->add_shape(
         mat,
         new mesh_terrain(vec3(100.0f, 0.5f, 100.0f), ivec3(100, 1, 100), source),
@@ -101,16 +105,21 @@ namespace octet {
       // draw the scene
       app_scene->render((float)vx / vy);
 
+      //update the geometry
+      wave_geometry->update();
+
+      //keep this out of the way -> updates the inputs and the UI
+      updateInputsAndUI(vx, vy);
+    }
+
+    void updateInputsAndUI(int vx, int vy){
       mat4t &camera = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
       //run key_presses loop to check for inputs
       inputs.key_presses(camera);
       //inputs.mouse_control(camera);
       Game_UI.updateUI(vx, vy);
       Game_UI.pop_up_clear();
-
-
     }
-
 
   };
 }

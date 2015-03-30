@@ -216,7 +216,7 @@
     <ClInclude Include="..\..\shaders\shaders.h" />
     <ClInclude Include="..\..\shaders\texture_shader.h" />
     <ClInclude Include="inputs.h" />
-    <ClInclude Include="ocean_waves.h" />
+    <ClInclude Include="water_simulation.h" />
     <ClInclude Include="UI.h" />
     <ClInclude Include="wave_mesh.h" />
   </ItemGroup>
