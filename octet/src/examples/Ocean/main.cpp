@@ -10,9 +10,7 @@
 #include "../../octet.h"
 
 #include "UI.h"
-#include "sky_box.h"
-#include "bmp_image.h"
-#include "perlin.h"
+#include "wave_mesh.h"
 #include "inputs.h"
 #include "ocean_waves.h"
 

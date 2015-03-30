@@ -22,12 +22,6 @@ namespace octet {
     // scene for drawing box
     ref<visual_scene> app_scene;
 
-    struct my_vertex {
-      vec3p pos;
-      vec3p nor;
-      uint32_t color;
-    };
-
     struct example_geometry_source : mesh_terrain::geometry_source {
       mesh::vertex vertex(
         vec3_in bb_min, vec3_in uv_min, vec3_in uv_delta, vec3_in pos
@@ -77,7 +71,6 @@ namespace octet {
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->set_far_plane(10000);
       setup_camera();
-      Sky_Box.InitDayNightCycle(app_scene);
 
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
@@ -112,8 +105,6 @@ namespace octet {
       //run key_presses loop to check for inputs
       inputs.key_presses(camera);
       //inputs.mouse_control(camera);
-
-      Sky_Box.DayNightCycle(app_scene);
       Game_UI.updateUI(vx, vy);
       Game_UI.pop_up_clear();
 
