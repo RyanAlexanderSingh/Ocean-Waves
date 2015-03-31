@@ -10,6 +10,8 @@ namespace octet {
   class inputs : public resource {
     // scene for drawing box
     ref<visual_scene> app_scene;
+    ref<wave_mesh> ocean_mesh;
+
   public:
     /// this is called when we construct the class before everything is initialised.
     inputs() {

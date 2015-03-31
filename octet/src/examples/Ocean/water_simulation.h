@@ -68,6 +68,29 @@ namespace octet {
 
       //keep this out of the way -> updates the inputs and the UI
       updateInputsAndUI(vx, vy);
+
+      keyboard_inputs();
+    }
+
+    void keyboard_inputs(){
+      if (is_key_down('1')){
+        wave_geometry->increment_freq();
+      }
+      if (is_key_down('2')){
+        wave_geometry->decrement_freq();
+      }
+      if (is_key_down('3')){
+        wave_geometry->increment_ampli();
+      }
+      if (is_key_down('4')){
+        wave_geometry->decrement_ampli();
+      }
+      if (is_key_down('5')){
+        wave_geometry->increment_omega();
+      }
+      if (is_key_down('6')){
+        wave_geometry->decrement_omega();
+      }
     }
 
     void updateInputsAndUI(int vx, int vy){

@@ -23,6 +23,7 @@ namespace octet{
     // we have 12 bytes of float position (x, y, z) and four bytes of color (r, g, b, a)
     struct my_vertex {
       vec3p pos;
+      vec3p norm;
       uint32_t color;
     };
 
@@ -42,18 +43,17 @@ namespace octet{
     size_t mesh_size = 120;
 
     dynarray<vec3p> points;
+    dynarray<vec3p> normals;
+    vec3 start_pos;
     float total_steepness = 1.0f;  // 0: sine wave, 1: maximum value
     float offset = 1.0f;
     int num_of_waves = 1.0f;
-    static unsigned long long time_step;
+    unsigned long long time_step = 0;
     random gen; // random number generator
     mesh *water;
 
-    // Calculate mesh vertices using the Gernster Wave Function
-    // Does so cumulatively over a given number of sine waves
-    // this is used to update the vertices in the update loop
-    // and also calculates the wave height
-    vec3 compute_gerstner_points(int x, int y){
+
+    vec3 gerstner_wave_function(int x_pos, int y_pos){
 
       //store the Gerstner wave function to a vector
       vec3 wavePosition;
@@ -62,7 +62,7 @@ namespace octet{
         // calculate each of the points according to Gerstner's wave function yo!
         sine_wave wave = sine_waves[i];
         float steepness = total_steepness / (wave.omega * sine_waves.size());
-        float radians = wave.frequency * wave.direction.dot(vec3(x, y, 0.0f)) + time_step * wave.omega;
+        float radians = wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f)) + time_step * wave.omega;
 
         //add to our position vector
         wavePosition.x() += steepness * wave.direction.x() * cosf(radians);
@@ -70,6 +70,24 @@ namespace octet{
         wavePosition.z() += wave.amplitude * sinf(radians);
       }
       return wavePosition;
+    }
+
+    // Calcualte normals according to Gerstner waves function
+    vec3 compute_gerstner_normals(int x, int y, vec3 point){
+      vec3 normal = vec3(0.0f, 0.0f, 1.0f);
+
+      for each (sine_wave wave in sine_waves)
+      {
+        float height_term = wave.omega * wave.amplitude;
+        float steepness = total_steepness / (wave.omega * sine_waves.size());
+        float radians = wave.frequency * wave.direction.dot(point) + time_step * wave.omega;
+        float x_pos = -height_term * wave.direction.x() * cosf(radians);
+        float y_pos = -height_term * wave.direction.y() * cosf(radians);
+        float z_pos = -steepness * height_term * sinf(radians);
+        normal += vec3(x_pos, y_pos, z_pos);
+      }
+
+      return normal;
     }
 
     static uint32_t make_color(vec3 col) {
@@ -84,11 +102,12 @@ namespace octet{
     //generate the wave simulation by making the sine waves
     void generate_waves(){
 
-      // set base wave attributes; each successive wave will have half / twice the value
-      float freq = TWO_PI * 0.02f;
+      //basic default parameters for our sine wave
+      float freq = TWO_PI * 0.01f;
       float phase = 3.0f;
       float ampl = 1.0f;
 
+      //create the sine waves and give the parameters some default behaviours
       for (int i = 0; i < num_of_waves; ++i){
         sine_wave sineWave;
         sineWave.amplitude = ampl * std::pow(0.5, (i + 1));
@@ -112,6 +131,7 @@ namespace octet{
       for (size_t i = 0; i != mesh_size; ++i) {
         for (size_t j = 0; j != mesh_size; ++j) {
           vtx->pos = points[j + i * mesh_size];
+          vtx->norm = normals[j + i*mesh_size];
           vtx->color = (0.0f, 0.2f, 1.0f);
           vtx++;
         }
@@ -149,13 +169,15 @@ namespace octet{
 
       //make the points the size of mesh_size squared
       size_t sq_mesh_size = mesh_size * mesh_size;
+      start_pos = vec3(-offset * 0.5f * mesh_size, offset * 0.5f * mesh_size, -1.0f);
       points.resize(sq_mesh_size);
+      normals.resize(sq_mesh_size);
 
       // allocate vertices and indices into OpenGL buffers
       size_t num_vertices = mesh_size * mesh_size;
       size_t num_indices = (mesh_size - 1) * (mesh_size - 1) * 6;
       water->allocate(sizeof(my_vertex) * num_vertices, sizeof(uint32_t) * num_indices);
-      water->set_params(sizeof(my_vertex), num_indices, num_vertices, GL_LINES, GL_UNSIGNED_INT);
+      water->set_params(sizeof(my_vertex), num_indices, num_vertices, GL_TRIANGLES, GL_UNSIGNED_INT);
 
       // describe the structure of my_vertex to OpenGL
       water->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
@@ -174,14 +196,47 @@ namespace octet{
     void update(){
       for (size_t i = 0; i != mesh_size; ++i) {
         for (size_t j = 0; j != mesh_size; ++j) {
-          vec3 wavePosition = compute_gerstner_points(j, i);
-          points[j + i * mesh_size] = vec3p((0.0f, 0.0f, 0.0f) + vec3(offset * j, -offset * i, 0.0f) + wavePosition);
+          vec3 wavePosition = gerstner_wave_function(j, i);
+          points[j + i * mesh_size] = vec3p(start_pos + vec3(offset * j, -offset * i, 0.0f) + wavePosition);
+          normals[j + i * mesh_size] = vec3p(compute_gerstner_normals(j, i, points[j + i*mesh_size]));
         }
       }
       ++time_step;
       update_mesh(); //once each point is updated, apply to the mesh
     }
+
+    void increment_freq(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].frequency += 0.01f;
+      }
+    }
+    void decrement_freq(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].frequency -= 0.01f;
+      }
+    }
+    void increment_ampli(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].amplitude += 0.01f;
+      }
+    }
+    void decrement_ampli(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].amplitude -= 0.01f;
+      }
+    }
+    void increment_omega(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].omega += 0.01f;
+      }
+    }
+    void decrement_omega(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].omega += 0.01f;
+      }
+    }
+
   };
-  unsigned long long wave_mesh::time_step = 0;
+  //unsigned long long wave_mesh::time_step = 0;
 }
 #endif
