@@ -48,16 +48,16 @@ namespace octet {
       // get the defualt font.
       bitmap_font *font = overlay->get_default_font();
       // create a box containing text (in pixels)
-      aabb bb_bot(vec3(0, -550, 0.0f), vec3(vx, 200.0f, 0.0f));
+      aabb bb_bot(vec3(0, -550.0f, 0.0f), vec3(vx, 200.0f, 0.0f));
       UI_bot = new mesh_text(font, "", &bb_bot);
 
-      aabb bb_top(vec3(vx * 3 / 8, 200, 0.0f), vec3(vx, 200.0f, 0.0f));
+      aabb bb_top(vec3(vx * 3.0f / 8.0f, 200.0f, 0.0f), vec3(vx, 200.0f, 0.0f));
       UI_top = new mesh_text(font, "", &bb_top);
 
-      aabb bb_popup(vec3(vx * 7 / 8, -240, 0.0f), vec3(vx, 200.0f, 0.0f));
+      aabb bb_popup(vec3(vx * 7.0f / 8.0f, -240.0f, 0.0f), vec3(vx, 200.0f, 0.0f));
       UI_popup = new mesh_text(font, "", &bb_popup);
 
-      aabb bb_target(vec3(vx, -100, 0.0f), vec3(vx, 100.0f, 0.0f));
+      aabb bb_target(vec3(vx, -100.0f, 0.0f), vec3(vx, 100.0f, 0.0f));
       target = new mesh_text(font, "+", &bb_target);
       // add the mesh to the overlay.
 
