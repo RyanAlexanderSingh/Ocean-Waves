@@ -13,6 +13,7 @@
 #define TWO_PI 6.28318530718
 
 #include <vector>
+#include <random>
 
 namespace octet{
 
@@ -45,7 +46,7 @@ namespace octet{
     float offset = 1.0f;
     int num_of_waves = 1.0f;
     static unsigned long long time_step;
-
+    random gen; // random number generator
     mesh *water;
 
     // Calculate mesh vertices using the Gernster Wave Function
@@ -86,12 +87,12 @@ namespace octet{
       // set base wave attributes; each successive wave will have half / twice the value
       float freq = TWO_PI * 0.02f;
       float phase = 3.0f;
-      float ampl = 3.0f;
+      float ampl = 1.0f;
 
       for (int i = 0; i < num_of_waves; ++i){
         sine_wave sineWave;
-        sineWave.amplitude = ampl * std::pow(1, (i + 1));
-        sineWave.direction = (1.0f, 1.0f, 0.0f);
+        sineWave.amplitude = ampl * std::pow(0.5, (i + 1));
+        sineWave.direction = vec3(gen.get(-1.0f, 1.0f), gen.get(-1.0f, 1.0f), 0.0f),
         sineWave.frequency = freq;
         sineWave.omega = phase * freq;
         sine_waves.push_back(sineWave);
