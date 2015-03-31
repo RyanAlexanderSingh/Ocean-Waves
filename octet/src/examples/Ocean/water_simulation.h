@@ -91,6 +91,12 @@ namespace octet {
       if (is_key_down('6')){
         wave_geometry->decrement_omega();
       }
+      if (is_key_down('7')){
+        wave_geometry->wireframe_mode_on();
+      }
+      if (is_key_down('7')){
+        wave_geometry->wireframe_mode_off();
+      }
     }
 
     void updateInputsAndUI(int vx, int vy){
