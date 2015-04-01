@@ -14,7 +14,6 @@ namespace octet {
   /// Scene containing a box with octet.
   class water_simulation : public app {
 
-    inputs inputs;
     UI Game_UI;
 
     // scene for drawing box
@@ -43,8 +42,6 @@ namespace octet {
       get_viewport_size(vx, vy);
       Game_UI.initUI(vx, vy);
 
-      inputs.init(this);
-
       //create our wave geometry object
       wave_geometry = new wave_mesh();
       wave_geometry->init(app_scene);
@@ -65,12 +62,25 @@ namespace octet {
       app_scene->render((float)vx / vy);
 
       //keep this out of the way -> updates the inputs and the UI
-      updateInputsAndUI(vx, vy);
-
-      keyboard_inputs();
+      mat4t &camera = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
+      updateUI(vx, vy);
+      keyboard_inputs(camera);
+      mouse_inputs(camera);
     }
 
-    void keyboard_inputs(){
+    #pragma region inputs
+    void keyboard_inputs(mat4t &camera){
+
+      //1-4 number keys on the keyboard
+      for (int i = 1; i <= 3; ++i){
+        char c = i + '0'; //ascii value
+        if (is_key_going_down(c)){
+          std::string txtfile = "../../../assets/wave_configs/wave_confign.txt";
+          txtfile.replace(40, 1, std::to_string(i)); //just inject the number of the key into the string and read that text file
+          wave_geometry->open_file(txtfile); //load up text file
+        }
+      }
+
       if (is_key_down('F') && is_key_down(key_up)){
         wave_geometry->increment_freq();
       }
@@ -83,17 +93,17 @@ namespace octet {
       if (is_key_down('A') && is_key_down(key_down)){
         wave_geometry->decrement_ampli();
       }
-      if (is_key_down('5')){
-        wave_geometry->increment_omega();
-      }
-      if (is_key_down('6')){
-        wave_geometry->decrement_omega();
-      }
       if (is_key_down('S') && is_key_down(key_up)){
         wave_geometry->increment_speed();
       }
       if (is_key_down('S') && is_key_down(key_down)){
         wave_geometry->decrement_speed();
+      }
+      if (is_key_down('Q') && is_key_down(key_up)){
+        wave_geometry->increment_steepness();
+      }
+      if (is_key_down('Q') && is_key_down(key_down)){
+        wave_geometry->decrement_steepness();
       }
       if (is_key_going_down('7')){
         wave_geometry->wireframe_mode_on();
@@ -101,16 +111,56 @@ namespace octet {
       if (is_key_going_down('8')){
         wave_geometry->wireframe_mode_off();
       }
+
+      if (is_key_down(key_esc)){
+        exit(0);
+      }
+
+      if (is_key_down(key::key_shift) && is_key_down('W'))
+      {
+        camera.translate(0, 0, -5);
+      }
+      if (is_key_down(key::key_shift) && is_key_down('S'))
+      {
+        camera.translate(0, 0, 5);
+      }
+      if (is_key_down(key::key_shift) && is_key_down('A'))
+      {
+        camera.translate(-5, 0, 0);
+      }
+      if (is_key_down(key::key_shift) && is_key_down('D'))
+      {
+        camera.translate(5, 0, 0);
+      }
     }
 
-    void updateInputsAndUI(int vx, int vy){
-      mat4t &camera = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
-      //run key_presses loop to check for inputs
-      inputs.key_presses(camera);
-      inputs.mouse_control(camera);
+    void updateUI(int vx, int vy){
       Game_UI.updateUI(vx, vy);
       Game_UI.pop_up_clear();
     }
+
+    void mouse_inputs(mat4t &camera){
+      //mouse control using x and y pos of mouse
+      int x, y;
+      get_mouse_pos(x, y);
+      int vx, vy;
+      get_viewport_size(vx, vy);
+
+      mat4t modelToWorld;
+
+      modelToWorld.loadIdentity();
+      modelToWorld[3] = vec4(camera.w().x(), camera.w().y(), camera.w().z(), 1);
+      modelToWorld.rotateY((float)-x*2.0f);
+      if (vy / 2 - y < 70 && vy / 2 - y > -70)
+        modelToWorld.rotateX((float)vy / 2 - y);
+      if (vy / 2 - y >= 70)
+        modelToWorld.rotateX(70);
+      if (vy / 2 - y <= -70)
+        modelToWorld.rotateX(-70);
+      camera = modelToWorld;//apply to the node
+    }
+
+    #pragma endregion
 
   };
 }

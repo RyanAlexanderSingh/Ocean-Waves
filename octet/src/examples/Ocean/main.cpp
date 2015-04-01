@@ -11,7 +11,6 @@
 
 #include "UI.h"
 #include "wave_mesh.h"
-#include "inputs.h"
 #include "water_simulation.h"
 
 /// Create a box with octet

@@ -14,6 +14,7 @@
 #define TWO_PI 6.28318530718f /* TWO PI */
 
 #include <random>
+#include <fstream>
 
 namespace octet{
 
@@ -38,28 +39,26 @@ namespace octet{
 
     //our array of sine waves
     dynarray<sine_wave> sine_waves;
+    dynarray<std::string> params;
     ref<visual_scene> the_app;
-
-    //size of our mesh
-    size_t mesh_size = 120;
-
-    float offset = 1.0f; //change this
-    int num_of_waves = 1.0f; //change this
-
-    unsigned long long time_step = 0; //the simulation could go on for a really long time
-    int animation_loop = 0; //this will be for the animation loop 10 secs min
-    random rand; // random number for wave pos
     mesh *water;
 
-    vec3 gerstner_wave_function(int x_pos, int y_pos){
+    float freq_ = 0.0f, ampli_ = 0.0f, speed_ = 0.0f, steepness_ = 0.0f;
+    int num_of_waves = 1.0f; //change this
+    size_t mesh_size = 120; //size of our mesh
+    unsigned long long time_step = 0; //the simulation could go on for a really long time
 
+    random rand; // random number for wave pos
+
+    vec3 gerstner_wave_function(int x_pos, int y_pos){
       //store the Gerstner wave function to a vector
       vec3 wavePosition;
 
       //for each sine wave
       for (unsigned i = 0; i < sine_waves.size(); ++i){
         sine_wave wave = sine_waves[i];
-        float angle = wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f)) + wave.speed * time_step;
+
+        float angle = (wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f))) + wave.speed * time_step;
 
         //add to our position vector
         wavePosition.x() += (wave.steepness * wave.amplitude) * wave.direction.x() * cosf(angle);
@@ -68,7 +67,6 @@ namespace octet{
       }
       return wavePosition;
     }
-
 
     static uint32_t make_color(vec3 col) {
       return 0xff000000 + ((int)(col.x()*255.0f) << 0) + ((int)(col.y()*255.0f) << 8) + ((int)(col.z()*255.0f) << 16);
@@ -82,22 +80,17 @@ namespace octet{
     //generate the wave simulation by making the sine waves
     void generate_waves(){
 
-      //basic default parameters for our sine wave (smooth waves)
-      float freq = 0.2f;
-      float phase = 3.0f;
-      float ampli = 1.2f;
-      float speed = 1.0f;
-      float steepness = 1.0f; //max steepness or we'll see some looping (remember that)
+      //open default file
+      open_file("../../../assets/wave_configs/wave_config1.txt");
 
       //create the sine waves and give the parameters some default behaviours
       for (int i = 0; i < num_of_waves; ++i){
         sine_wave sineWave;
-        sineWave.amplitude = ampli;
-        sineWave.speed = speed;
-        sineWave.frequency = freq;
-        sineWave.steepness = 1.0f;
+        sineWave.amplitude = ampli_;
+        sineWave.speed = speed_;
+        sineWave.frequency = freq_;
+        sineWave.steepness = steepness_;
         sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f),
-       
         sine_waves.push_back(sineWave); //add to dynarray
       }
     }
@@ -110,8 +103,7 @@ namespace octet{
 
       this->the_app = vs;
       param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
-      material *water_material = new material(vec4(0, 0.3f, 1.0f, 0.6f), shader);
-   
+      material *water_material = new material(vec4(0.3f, 0.6f, 1.0f, 1), shader);
 
       //create a mesh object
       water = new mesh();
@@ -127,7 +119,7 @@ namespace octet{
       water->add_attribute(attribute_normal, 3, GL_FLOAT, 0);
       water->add_attribute(attribute_color, 4, GL_UNSIGNED_BYTE, 12, GL_TRUE);
 
-      //generate our default waves 
+      //generate our default waves ->> reading in first text file with default params
       generate_waves();
 
       scene_node *node = new scene_node();
@@ -136,7 +128,7 @@ namespace octet{
       the_app->add_mesh_instance(new mesh_instance(node, water, water_material));
     }
 
-    
+
     //need to update the points each frame
     void update(){
 
@@ -153,7 +145,7 @@ namespace octet{
       for (size_t i = 0; i != mesh_size; ++i) {
         for (size_t j = 0; j != mesh_size; ++j) {
           vec3 wavePosition = gerstner_wave_function(j, i);
-          vtx->pos = vec3p(vec3(offset * j, -offset * i, 0.0f) + wavePosition);
+          vtx->pos = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
           //vtx->color = (0.0f, 0.3f, 1.0f);
           vtx++;
         }
@@ -176,8 +168,62 @@ namespace octet{
       }
     }
 
+    //just to clean up before we load a new file
+    void open_file(std::string txtfile){
+      std::ifstream file(txtfile);
+      std::string config_name;
+      //if exists
+      if (file.is_open()){
+        printf("\nreading in wave configuration file...\n");
+        std::getline(file, config_name);
+
+        std::string newline;
+        while (std::getline(file, newline)){
+
+          if (newline.compare("Amplitude:") == 0){
+            std::getline(file, newline);
+            ampli_ = std::stof(newline); //convert string to float
+            printf("Amplitude: %f\n", ampli_);
+          }
+          if (newline.compare("Frequency:") == 0){
+            std::getline(file, newline);
+            freq_ = std::stof(newline); //string to float
+            printf("Frequency: %f\n", freq_);
+          }
+          if (newline.compare("Speed:") == 0){
+            std::getline(file, newline);
+            speed_ = std::stof(newline); //string to float
+            printf("Speed: %f\n", speed_);
+          }
+          if (newline.compare("Steepness:") == 0){
+            std::getline(file, newline);
+            steepness_ = std::stof(newline); //string to float
+            printf("Steepness: %f\n", steepness_);
+          }
+        }
+        file.close(); //we don't need the file anymore
+        printf("%s file has been read\n", config_name.c_str()); //print the name of the file
+      }
+      else{
+        printf("failed to load configuration file...using default params\n");
+        //basic default parameters for our sine wave (smooth waves)
+        freq_ = 0.4f;
+        ampli_ = 0.68f;
+        speed_ = 0.3f;
+        steepness_ = 1.0f; //max steepness or we'll see some looping (remember that)
+      }
+
+      for (unsigned i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].amplitude = ampli_;
+        sine_waves[i].frequency = freq_;
+        sine_waves[i].speed = speed_;
+        sine_waves[i].steepness = steepness_;
+      }
+     
+    }
+
     //dont need this visible at all times (pragma region)
-    #pragma region input_functions
+#pragma region input_functions
     void increment_freq(){
       for (int i = 0; i < sine_waves.size(); ++i){
         sine_waves[i].frequency += 0.01f;
@@ -215,6 +261,18 @@ namespace octet{
       }
       printf("Speed: %f\n", sine_waves[0].speed);
     }
+    void increment_steepness(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].steepness += 0.01f;
+      }
+      printf("Steepness: %f\n", sine_waves[0].steepness);
+    }
+    void decrement_steepness(){
+      for (int i = 0; i < sine_waves.size(); ++i){
+        sine_waves[i].steepness -= 0.01f;
+      }
+      printf("Steepness: %f\n", sine_waves[0].steepness);
+    }
     void wireframe_mode_on(){
       water->set_mode(1);
       printf("Wireframe mode ON\n");
@@ -223,7 +281,7 @@ namespace octet{
       water->set_mode(4);
       printf("Wireframe mode OFF\n");
     }
-    #pragma endregion
+#pragma endregion
   };
 }
 #endif
