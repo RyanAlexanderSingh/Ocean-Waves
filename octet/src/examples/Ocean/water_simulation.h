@@ -23,7 +23,6 @@ namespace octet {
     collada_builder loader;
 
     void create_skybox(){
-
       mesh_sphere *skybox = new mesh_sphere(vec3(0, 0, 0), 1000);
       material *mat = new material(new image("assets/skybox.jpg"));
       mat4t location;
@@ -54,7 +53,20 @@ namespace octet {
       li->set_light(_light);
       app_scene->add_light_instance(li);
 
-      //working on this one
+      //working on this lighting
+      //node = new scene_node();
+      //app_scene->add_child(node);
+      //_light = new light();
+      //li = new light_instance();
+      //node->translate(vec3(100, 100, -100));
+      //node->rotate(-45, vec3(1, 0, 0));
+      //node->rotate(-180, vec3(0, 1, 0));
+      //_light->set_color(vec4(1, 1, 1, 1));
+      //_light->set_kind(atom_directional);
+      //li->set_node(node);
+      //li->set_light(_light);
+      //app_scene->add_light_instance(li);
+      //working on this lighting
 
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->set_far_plane(10000);
