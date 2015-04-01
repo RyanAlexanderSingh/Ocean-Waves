@@ -91,7 +91,7 @@ namespace octet{
         sineWave.frequency = freq_;
         sineWave.steepness = steepness_;
         sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f),
-        sine_waves.push_back(sineWave); //add to dynarray
+          sine_waves.push_back(sineWave); //add to dynarray
       }
     }
 
@@ -103,7 +103,7 @@ namespace octet{
 
       this->the_app = vs;
       param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
-      material *water_material = new material(vec4(0.3f, 0.6f, 1.0f, 1), shader);
+      material *water_material = new material(vec4(0.0f, 0.3f, 1.0f, 1), shader);
 
       //create a mesh object
       water = new mesh();
@@ -147,7 +147,7 @@ namespace octet{
         for (size_t j = 0; j != mesh_size; ++j) {
           vec3 wavePosition = gerstner_wave_function(j, i);
           vtx->pos = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
-          //vtx->color = (0.0f, 0.3f, 1.0f);
+          vtx->norm = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
           vtx++;
         }
       }
@@ -220,7 +220,29 @@ namespace octet{
         sine_waves[i].speed = speed_;
         sine_waves[i].steepness = steepness_;
       }
-     
+
+    }
+
+    void save_custom_config(){
+      std::ofstream file("../../../assets/wave_configs/custom_config.txt");
+      std::string config_name;
+      //if it exists
+      if (file.is_open()){
+        printf("\nWriting to custom configuration file...\n");
+        
+        file << "Custom Configuration File\n";
+        file << "Amplitude:\n";
+        file << ampli_ << std::endl;
+        file << "Frequency:\n";
+        file << freq_ << std::endl;
+        file << "Speed:\n";
+        file << speed_ << std::endl;
+        file << "Steepness:\n";
+        file << steepness_ << std::endl;
+
+        file.close(); //we don't need the file anymore
+        printf("File has been saved\n");
+      }
     }
 
     //dont need this visible at all times (pragma region)

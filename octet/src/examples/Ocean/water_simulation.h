@@ -39,21 +39,21 @@ namespace octet {
       app_scene = new visual_scene();
       app_scene->set_world_gravity(btVector3(0, 0, 0));
 
-      //this one works 
-      light *_light = new light();
-      light_instance *li = new light_instance();
-      scene_node *node = new scene_node();
-      app_scene->add_child(node);
-      node->translate(vec3(-100, 100, -100));
-      node->rotate(45, vec3(1, 0, 0));
-      node->rotate(180, vec3(0, 1, 0));
-      _light->set_color(vec4(1, 1, 1, 1));
-      _light->set_kind(atom_directional);
-      li->set_node(node);
-      li->set_light(_light);
-      app_scene->add_light_instance(li);
+      ////this one works 
+      //light *_light = new light();
+      //light_instance *li = new light_instance();
+      //scene_node *node = new scene_node();
+      //app_scene->add_child(node);
+      //node->translate(vec3(0.0f, -100, -100));
+      //node->rotate(-45, vec3(1, 0, 0));
+      //node->rotate(-180, vec3(0, 1, 0));
+      //_light->set_color(vec4(1, 1, 1, 1));
+      //_light->set_kind(atom_directional);
+      //li->set_node(node);
+      //li->set_light(_light);
+      //app_scene->add_light_instance(li);
 
-      //working on this lighting
+      ////working on this lighting
       //node = new scene_node();
       //app_scene->add_child(node);
       //_light = new light();
@@ -66,7 +66,7 @@ namespace octet {
       //li->set_node(node);
       //li->set_light(_light);
       //app_scene->add_light_instance(li);
-      //working on this lighting
+      ////working on this lighting
 
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->set_far_plane(10000);
@@ -115,6 +115,14 @@ namespace octet {
           txtfile.replace(40, 1, std::to_string(i)); //just inject the number of the key into the string and read that text file
           wave_geometry->open_file(txtfile); //load up text file
         }
+      }
+      //custom config file
+      if (is_key_going_down('C')){
+        wave_geometry->save_custom_config();
+      }
+      //custom config file
+      if (is_key_going_down('R')){
+        wave_geometry->open_file("../../../assets/wave_configs/custom_config.txt");
       }
 
       if (is_key_down('F') && is_key_down(key_up)){
