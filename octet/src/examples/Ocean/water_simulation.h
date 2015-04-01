@@ -71,16 +71,16 @@ namespace octet {
     }
 
     void keyboard_inputs(){
-      if (is_key_down('1')){
+      if (is_key_down('F') && is_key_down(key_up)){
         wave_geometry->increment_freq();
       }
-      if (is_key_down('2')){
+      if (is_key_down('F') && is_key_down(key_down)){
         wave_geometry->decrement_freq();
       }
-      if (is_key_down('3')){
+      if (is_key_down('A') && is_key_down(key_up)){
         wave_geometry->increment_ampli();
       }
-      if (is_key_down('4')){
+      if (is_key_down('A') && is_key_down(key_down)){
         wave_geometry->decrement_ampli();
       }
       if (is_key_down('5')){
@@ -88,6 +88,12 @@ namespace octet {
       }
       if (is_key_down('6')){
         wave_geometry->decrement_omega();
+      }
+      if (is_key_down('S') && is_key_down(key_up)){
+        wave_geometry->increment_speed();
+      }
+      if (is_key_down('S') && is_key_down(key_down)){
+        wave_geometry->decrement_speed();
       }
       if (is_key_going_down('7')){
         wave_geometry->wireframe_mode_on();

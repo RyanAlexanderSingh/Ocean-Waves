@@ -2,15 +2,16 @@
 //
 // (C) Ryan Singh 2015
 //
-// Wave Mesh generated using sin waves --> enter generic algorithm name here
+// Based off Chapter 1. Effective Water Simulation from Physical Models http://http.developer.nvidia.com/GPUGems/gpugems_ch01.html
+// Using the Gerstner wave function 
 //
 
 #ifndef WAVE_MESH_H_INCLUDED
 #define WAVE_MESH_H_INCLUDED
 
 
-#define PI 3.14159265359  /* pi */
-#define TWO_PI 6.28318530718
+#define PI 3.14159265359f  /* PI */
+#define TWO_PI 6.28318530718f /* TWO PI */
 
 #include <random>
 
@@ -30,21 +31,23 @@ namespace octet{
     struct sine_wave{
       float amplitude;
       float speed;
-      vec3 direction;
       float frequency;
-      float omega; //CHANGE THIS
+      float steepness;
+      vec3 direction;
     };
 
     //our array of sine waves
     dynarray<sine_wave> sine_waves;
     ref<visual_scene> the_app;
 
+    //size of our mesh
     size_t mesh_size = 120;
 
-    float total_steepness = 1.0f; //change this
     float offset = 1.0f; //change this
     int num_of_waves = 1.0f; //change this
-    unsigned long long time_step = 0;
+
+    unsigned long long time_step = 0; //the simulation could go on for a really long time
+    int animation_loop = 0; //this will be for the animation loop 10 secs min
     random rand; // random number for wave pos
     mesh *water;
 
@@ -53,16 +56,15 @@ namespace octet{
       //store the Gerstner wave function to a vector
       vec3 wavePosition;
 
-      for (size_t i = 0; i < sine_waves.size(); ++i){
-        // calculate each of the points according to Gerstner's wave function yo!
+      //for each sine wave
+      for (unsigned i = 0; i < sine_waves.size(); ++i){
         sine_wave wave = sine_waves[i];
-        float steepness = total_steepness / (wave.omega * sine_waves.size());
-        float radians = wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f)) + time_step * wave.omega;
+        float angle = wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f)) + wave.speed * time_step;
 
         //add to our position vector
-        wavePosition.x() += steepness * wave.direction.x() * cosf(radians);
-        wavePosition.y() += steepness * wave.direction.y() * cosf(radians);
-        wavePosition.z() += wave.amplitude * sinf(radians);
+        wavePosition.x() += (wave.steepness * wave.amplitude) * wave.direction.x() * cosf(angle);
+        wavePosition.y() += (wave.steepness * wave.amplitude) * wave.direction.y() * cosf(angle);
+        wavePosition.z() += wave.amplitude * sinf(angle);
       }
       return wavePosition;
     }
@@ -84,15 +86,19 @@ namespace octet{
       float freq = 0.2f;
       float phase = 3.0f;
       float ampli = 1.2f;
+      float speed = 1.0f;
+      float steepness = 1.0f; //max steepness or we'll see some looping (remember that)
 
       //create the sine waves and give the parameters some default behaviours
       for (int i = 0; i < num_of_waves; ++i){
         sine_wave sineWave;
         sineWave.amplitude = ampli;
+        sineWave.speed = speed;
+        sineWave.frequency = freq;
+        sineWave.steepness = 1.0f;
         sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f),
-          sineWave.frequency = freq;
-        sineWave.omega = 0.36f;
-        sine_waves.push_back(sineWave);
+       
+        sine_waves.push_back(sineWave); //add to dynarray
       }
     }
 
@@ -104,9 +110,10 @@ namespace octet{
 
       this->the_app = vs;
       param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
-      material *water_material = new material(vec4(0, 0, 1, 1), shader);
+      material *water_material = new material(vec4(0, 0.3f, 1.0f, 0.6f), shader);
+   
 
-      //create a new mesh
+      //create a mesh object
       water = new mesh();
 
       // allocate vertices and indices into OpenGL buffers
@@ -129,8 +136,8 @@ namespace octet{
       the_app->add_mesh_instance(new mesh_instance(node, water, water_material));
     }
 
-    //rebuild the mesh every frame -- we need to recalculate it
-
+    
+    //need to update the points each frame
     void update(){
 
       ++time_step; //update our time step
@@ -147,7 +154,7 @@ namespace octet{
         for (size_t j = 0; j != mesh_size; ++j) {
           vec3 wavePosition = gerstner_wave_function(j, i);
           vtx->pos = vec3p(vec3(offset * j, -offset * i, 0.0f) + wavePosition);
-          vtx->color = (0.0f, 0.2f, 1.0f);
+          //vtx->color = (0.0f, 0.3f, 1.0f);
           vtx++;
         }
       }
@@ -169,6 +176,8 @@ namespace octet{
       }
     }
 
+    //dont need this visible at all times (pragma region)
+    #pragma region input_functions
     void increment_freq(){
       for (int i = 0; i < sine_waves.size(); ++i){
         sine_waves[i].frequency += 0.01f;
@@ -194,17 +203,17 @@ namespace octet{
       }
       printf("Amplitude: %f\n", sine_waves[0].amplitude);
     }
-    void increment_omega(){
+    void increment_speed(){
       for (int i = 0; i < sine_waves.size(); ++i){
-        sine_waves[i].omega += 0.01f;
+        sine_waves[i].speed += 0.01f;
       }
-      printf("Omega: %f\n", sine_waves[0].omega);
+      printf("Speed: %f\n", sine_waves[0].speed);
     }
-    void decrement_omega(){
+    void decrement_speed(){
       for (int i = 0; i < sine_waves.size(); ++i){
-        sine_waves[i].omega -= 0.01f;
+        sine_waves[i].speed -= 0.01f;
       }
-      printf("Omega: %f\n", sine_waves[0].omega);
+      printf("Speed: %f\n", sine_waves[0].speed);
     }
     void wireframe_mode_on(){
       water->set_mode(1);
@@ -214,7 +223,7 @@ namespace octet{
       water->set_mode(4);
       printf("Wireframe mode OFF\n");
     }
-
+    #pragma endregion
   };
 }
 #endif
