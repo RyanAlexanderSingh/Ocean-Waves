@@ -1,0 +1,9 @@
+Large Waves
+Amplitude:
+-5.6
+Frequency:
+0.28
+Speed:
+0.14
+Steepness:
+0.7

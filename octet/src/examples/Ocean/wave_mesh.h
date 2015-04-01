@@ -123,6 +123,7 @@ namespace octet{
       generate_waves();
 
       scene_node *node = new scene_node();
+      node->translate(vec3(100, 0, 100));
       node->rotate(90.0f, vec3(1.0, 0.0f, 0.0f)); //need to rotate it to be forward facing
       //add the mesh to the scene
       the_app->add_mesh_instance(new mesh_instance(node, water, water_material));

@@ -9,7 +9,6 @@
 
 #include "../../octet.h"
 
-#include "UI.h"
 #include "wave_mesh.h"
 #include "water_simulation.h"
 

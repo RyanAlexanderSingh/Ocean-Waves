@@ -1,0 +1,9 @@
+Default Waves
+Amplitude:
+0.68
+Frequency:
+0.4
+Speed:
+0.3
+Steepness:
+1.0

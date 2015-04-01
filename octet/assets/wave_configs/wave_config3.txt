@@ -1,0 +1,9 @@
+Ripples
+Amplitude:
+0.22
+Frequency:
+1.26
+Speed:
+0.7
+Steepness:
+0.33
