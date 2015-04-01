@@ -12,7 +12,6 @@
 #define PI 3.14159265359  /* pi */
 #define TWO_PI 6.28318530718
 
-#include <vector>
 #include <random>
 
 namespace octet{
@@ -33,22 +32,20 @@ namespace octet{
       float speed;
       vec3 direction;
       float frequency;
-      float omega;
+      float omega; //CHANGE THIS
     };
 
     //our array of sine waves
     dynarray<sine_wave> sine_waves;
-
     ref<visual_scene> the_app;
+
     size_t mesh_size = 120;
 
-    dynarray<vec3p> points;
-    vec3 start_pos;
-    float total_steepness = 1.0f;  // 0: sine wave, 1: maximum value
-    float offset = 1.0f;
-    int num_of_waves = 1.0f;
+    float total_steepness = 1.0f; //change this
+    float offset = 1.0f; //change this
+    int num_of_waves = 1.0f; //change this
     unsigned long long time_step = 0;
-    random gen; // random number generator
+    random rand; // random number for wave pos
     mesh *water;
 
     vec3 gerstner_wave_function(int x_pos, int y_pos){
@@ -83,24 +80,61 @@ namespace octet{
     //generate the wave simulation by making the sine waves
     void generate_waves(){
 
-      //basic default parameters for our sine wave
-      float freq = TWO_PI * 0.01f;
+      //basic default parameters for our sine wave (smooth waves)
+      float freq = 0.2f;
       float phase = 3.0f;
-      float ampl = 1.0f;
+      float ampli = 1.2f;
 
       //create the sine waves and give the parameters some default behaviours
       for (int i = 0; i < num_of_waves; ++i){
         sine_wave sineWave;
-        sineWave.amplitude = ampl * std::pow(0.5, (i + 1));
-        sineWave.direction = vec3(gen.get(-1.0f, 1.0f), gen.get(-1.0f, 1.0f), 0.0f),
-        sineWave.frequency = freq;
-        sineWave.omega = phase * freq;
+        sineWave.amplitude = ampli;
+        sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f),
+          sineWave.frequency = freq;
+        sineWave.omega = 0.36f;
         sine_waves.push_back(sineWave);
       }
     }
 
+  public:
+    wave_mesh(){}
+
+    //we're going to want an init function
+    void init(visual_scene *vs){
+
+      this->the_app = vs;
+      param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
+      material *water_material = new material(vec4(0, 0, 1, 1), shader);
+
+      //create a new mesh
+      water = new mesh();
+
+      // allocate vertices and indices into OpenGL buffers
+      size_t num_vertices = mesh_size * mesh_size;
+      size_t num_indices = (mesh_size - 1) * (mesh_size - 1) * 6;
+      water->allocate(sizeof(my_vertex) * num_vertices, sizeof(uint32_t) * num_indices);
+      water->set_params(sizeof(my_vertex), num_indices, num_vertices, GL_TRIANGLES, GL_UNSIGNED_INT);
+
+      // describe the structure of my_vertex to OpenGL
+      water->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
+      water->add_attribute(attribute_normal, 3, GL_FLOAT, 0);
+      water->add_attribute(attribute_color, 4, GL_UNSIGNED_BYTE, 12, GL_TRUE);
+
+      //generate our default waves 
+      generate_waves();
+
+      scene_node *node = new scene_node();
+      node->rotate(90.0f, vec3(1.0, 0.0f, 0.0f)); //need to rotate it to be forward facing
+      //add the mesh to the scene
+      the_app->add_mesh_instance(new mesh_instance(node, water, water_material));
+    }
+
     //rebuild the mesh every frame -- we need to recalculate it
-    void update_mesh(){
+
+    void update(){
+
+      ++time_step; //update our time step
+
       // these write-only locks give access to the vertices and indices.
       // they will be released at the next } (the end of the scope)
       gl_resource::wolock vl(water->get_vertices());
@@ -111,7 +145,8 @@ namespace octet{
       // make the vertices
       for (size_t i = 0; i != mesh_size; ++i) {
         for (size_t j = 0; j != mesh_size; ++j) {
-          vtx->pos = points[j + i * mesh_size];
+          vec3 wavePosition = gerstner_wave_function(j, i);
+          vtx->pos = vec3p(vec3(offset * j, -offset * i, 0.0f) + wavePosition);
           vtx->color = (0.0f, 0.2f, 1.0f);
           vtx++;
         }
@@ -134,59 +169,10 @@ namespace octet{
       }
     }
 
-  public:
-    wave_mesh(){}
-
-    //we're going to want an init function
-    void init(visual_scene *vs){
-
-      this->the_app = vs;
-      param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
-      material *water_material = new material(vec4(0, 0, 1, 1), shader);
-
-      //create a new mesh
-      water = new mesh();
-
-      //make the points the size of mesh_size squared
-      size_t sq_mesh_size = mesh_size * mesh_size;
-      start_pos = vec3(-offset * 0.5f * mesh_size, offset * 0.5f * mesh_size, -1.0f);
-      points.resize(sq_mesh_size);
-
-      // allocate vertices and indices into OpenGL buffers
-      size_t num_vertices = mesh_size * mesh_size;
-      size_t num_indices = (mesh_size - 1) * (mesh_size - 1) * 6;
-      water->allocate(sizeof(my_vertex) * num_vertices, sizeof(uint32_t) * num_indices);
-      water->set_params(sizeof(my_vertex), num_indices, num_vertices, GL_TRIANGLES, GL_UNSIGNED_INT);
-
-      // describe the structure of my_vertex to OpenGL
-      water->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
-      water->add_attribute(attribute_normal, 3, GL_FLOAT, 0);
-      water->add_attribute(attribute_color, 4, GL_UNSIGNED_BYTE, 12, GL_TRUE);
-
-      generate_waves();
-      update();
-
-      scene_node *node = new scene_node();
-      //add the mesh to the scene
-      the_app->add_mesh_instance(new mesh_instance(node, water, water_material));
-    }
-
-    //update function to update the points of the mesh
-    void update(){
-      for (size_t i = 0; i != mesh_size; ++i) {
-        for (size_t j = 0; j != mesh_size; ++j) {
-          vec3 wavePosition = gerstner_wave_function(j, i);
-          points[j + i * mesh_size] = vec3p(start_pos + vec3(offset * j, -offset * i, 0.0f) + wavePosition);
-        }
-      }
-      ++time_step;
-      update_mesh(); //once each point is updated, apply to the mesh
-    }
-
     void increment_freq(){
       for (int i = 0; i < sine_waves.size(); ++i){
         sine_waves[i].frequency += 0.01f;
-        
+
       }
       printf("Frequency: %f\n", sine_waves[0].frequency);
     }
@@ -221,15 +207,14 @@ namespace octet{
       printf("Omega: %f\n", sine_waves[0].omega);
     }
     void wireframe_mode_on(){
-      water->make_wireframe();
+      water->set_mode(1);
       printf("Wireframe mode ON\n");
-   }
+    }
     void wireframe_mode_off(){
-      water->make_wireframe();
+      water->set_mode(4);
       printf("Wireframe mode OFF\n");
     }
 
   };
-  //unsigned long long wave_mesh::time_step = 0;
 }
 #endif

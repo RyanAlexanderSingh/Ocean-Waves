@@ -24,9 +24,7 @@ namespace octet {
     void setup_camera()
     {
       mat4t &camera_mat = app_scene->get_camera_instance(0)->get_node()->access_nodeToParent();
-      camera_mat.translate(60, -200, 0);
-      //camera_mat.rotateY(90);
-      camera_mat.rotateX(90);
+      camera_mat.translate(0, 150, 0);
     }
 
   public:
@@ -91,10 +89,10 @@ namespace octet {
       if (is_key_down('6')){
         wave_geometry->decrement_omega();
       }
-      if (is_key_down('7')){
+      if (is_key_going_down('7')){
         wave_geometry->wireframe_mode_on();
       }
-      if (is_key_down('7')){
+      if (is_key_going_down('8')){
         wave_geometry->wireframe_mode_off();
       }
     }
