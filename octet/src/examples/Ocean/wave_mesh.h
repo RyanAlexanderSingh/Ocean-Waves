@@ -36,7 +36,10 @@ namespace octet{
       float speed;
       float frequency;
       float steepness;
+      //additional params for editing
       vec3 direction;
+      float dRotation;
+      vec3 colour;
     };
 
     //our array of sine waves
@@ -68,26 +71,21 @@ namespace octet{
       return wavePosition;
     }
 
-    vec3 gerstner_wave_normals(int x_pos, int y_pos, vec3 point_position){
+    vec3 gerstner_wave_normals(vec3 point_position){
       //store the Gerstner wave function to a vector
-      vec3 normal = vec3(0.0f, 0.0f, 1.0f);
-
+      vec3 normal;
       //for each sine wave
       for (unsigned i = 0; i < sine_waves.size(); ++i){
         sine_wave wave = sine_waves[i];
-
        
         float radians = wave.frequency * wave.direction.dot(point_position) + wave.speed * time_step;
 
-        float x_pos = -(wave.steepness * wave.amplitude) * wave.direction.x() * cosf(radians);
-        float y_pos = -(wave.steepness * wave.amplitude) * wave.direction.y() * cosf(radians);
-        float z_pos = (wave.steepness * wave.amplitude) * sinf(radians);
-        normal += vec3(x_pos, y_pos, z_pos);
-        normal.normalize();
+        normal.x() += (wave.steepness * wave.amplitude) * wave.direction.x() * cosf(radians);
+        normal.y() += -(wave.steepness * wave.amplitude) * wave.direction.y() * cosf(radians);
+        normal.z() = (wave.steepness * wave.amplitude) * sinf(radians);
       }
       return normal;
     }
-
 
 
     //generate the wave simulation by making the sine waves
@@ -162,8 +160,8 @@ namespace octet{
         for (size_t j = 0; j != mesh_size; ++j) {
           vec3 wavePosition = gerstner_wave_position(j, i);
           vtx->pos = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
-          vec3 normalPosition = gerstner_wave_normals(j, i, wavePosition);
-          vtx->normal = vec3p(normalPosition);
+          vec3 normalPosition = gerstner_wave_normals(wavePosition);
+          vtx->normal = vec3p(wavePosition);
           vtx++;
         }
       }

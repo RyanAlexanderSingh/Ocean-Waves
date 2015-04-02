@@ -19,7 +19,7 @@ namespace octet {
     ref<wave_mesh> wave_geometry;
     ref<camera_instance> camera;
 
-    TwBar* bar_;
+    TwBar* tweakBar;
     typedef enum { COMPLEX, SPIRO1, SPIRO2 } FunctionsType;
 
     void create_skybox(){
@@ -29,16 +29,8 @@ namespace octet {
       app_scene->add_shape(location, skybox, mat, false);
     }
 
-  public:
-    /// this is called when we construct the class before everything is initialised.
-    water_simulation(int argc, char **argv) : app(argc, argv) {
-    }
-
-    /// this is called once OpenGL is initialized
-    void app_init() {
-      app_scene = new visual_scene();
-      app_scene->set_world_gravity(btVector3(0, 0, 0));
-
+    //Source: Juanmi Huertas Delgado
+    void add_light_instances(){
       //this one works 
       light *_light = new light();
       light_instance *li = new light_instance();
@@ -53,6 +45,32 @@ namespace octet {
       li->set_light(_light);
       app_scene->add_light_instance(li);
 
+      node = new scene_node();
+      app_scene->add_child(node);
+      _light = new light();
+      li = new light_instance();
+      node->translate(vec3(-100, 100, -100));
+      node->rotate(-45, vec3(1, 0, 0));
+      node->rotate(45, vec3(0, 1, 0));
+      _light->set_color(vec4(1, 1, 1, 1));
+      _light->set_kind(atom_directional);
+      li->set_node(node);
+      li->set_light(_light);
+      app_scene->add_light_instance(li);
+    }
+    //Source End
+
+  public:
+    /// this is called when we construct the class before everything is initialised.
+    water_simulation(int argc, char **argv) : app(argc, argv) {
+    }
+
+    /// this is called once OpenGL is initialized
+    void app_init() {
+      app_scene = new visual_scene();
+      app_scene->set_world_gravity(btVector3(0, 0, 0));
+
+      add_light_instances();
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->set_far_plane(10000);
       camera = app_scene->get_camera_instance(0);
@@ -68,14 +86,16 @@ namespace octet {
       create_skybox();
 
       TwInit(TW_OPENGL, NULL);
-      TwWindowSize(768, 912 + 100);
 
-      bar_ = TwNewBar("Wave Parameters");
+      tweakBar = TwNewBar("Wave Parameters");
 
-      TwAddVarRW(bar_, "Amplitude", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].amplitude, " label='Amplitude' Min=0.01f ");
-      TwAddVarRW(bar_, "Frequency", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].frequency, "");
-      TwAddVarRW(bar_, "Speed", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].speed, "");
-      TwAddVarRW(bar_, "Steepness", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].steepness, "");
+      TwAddVarRW(tweakBar, "Amplitude", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].amplitude, "Step=0.01f");
+      TwAddVarRW(tweakBar, "Frequency", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].frequency, "Step=0.01f ");
+      TwAddVarRW(tweakBar, "Speed", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].speed, "Step=0.01f");
+      TwAddVarRW(tweakBar, "Steepness", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].steepness, "Step=0.1f Min=0.0f Max=1.0f");
+      TwAddVarRW(tweakBar, "Direction", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].dRotation, "Step=0.1f");
+      TwAddVarRW(tweakBar, "Ocean Colour", TW_TYPE_COLOR3F, &wave_geometry->sine_waves[0].colour, " label='Ocean Colour' ");
+
 
     }
 
@@ -84,6 +104,7 @@ namespace octet {
       int vx = 0, vy = 0;
       get_viewport_size(vx, vy);
       app_scene->begin_render(vx, vy);
+      TwWindowSize(vx, vy);
 
       //update the geometry
       wave_geometry->update();
