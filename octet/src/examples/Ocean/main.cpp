@@ -7,6 +7,7 @@
 
 #define OCTET_BULLET 1
 
+#include "AntTweakBar\AntTweakBar.h"
 #include "../../octet.h"
 
 #include "wave_mesh.h"

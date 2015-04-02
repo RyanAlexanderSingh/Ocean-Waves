@@ -19,8 +19,8 @@ namespace octet {
     ref<wave_mesh> wave_geometry;
     ref<camera_instance> camera;
 
-    //only using this for the skybox (think about moving this)
-    collada_builder loader;
+    TwBar* bar_;
+    typedef enum { COMPLEX, SPIRO1, SPIRO2 } FunctionsType;
 
     void create_skybox(){
       mesh_sphere *skybox = new mesh_sphere(vec3(0, 0, 0), 1000);
@@ -39,34 +39,19 @@ namespace octet {
       app_scene = new visual_scene();
       app_scene->set_world_gravity(btVector3(0, 0, 0));
 
-      ////this one works 
-      //light *_light = new light();
-      //light_instance *li = new light_instance();
-      //scene_node *node = new scene_node();
-      //app_scene->add_child(node);
-      //node->translate(vec3(0.0f, -100, -100));
-      //node->rotate(-45, vec3(1, 0, 0));
-      //node->rotate(-180, vec3(0, 1, 0));
-      //_light->set_color(vec4(1, 1, 1, 1));
-      //_light->set_kind(atom_directional);
-      //li->set_node(node);
-      //li->set_light(_light);
-      //app_scene->add_light_instance(li);
-
-      ////working on this lighting
-      //node = new scene_node();
-      //app_scene->add_child(node);
-      //_light = new light();
-      //li = new light_instance();
-      //node->translate(vec3(100, 100, -100));
-      //node->rotate(-45, vec3(1, 0, 0));
-      //node->rotate(-180, vec3(0, 1, 0));
-      //_light->set_color(vec4(1, 1, 1, 1));
-      //_light->set_kind(atom_directional);
-      //li->set_node(node);
-      //li->set_light(_light);
-      //app_scene->add_light_instance(li);
-      ////working on this lighting
+      //this one works 
+      light *_light = new light();
+      light_instance *li = new light_instance();
+      scene_node *node = new scene_node();
+      app_scene->add_child(node);
+      node->translate(vec3(0.0f, -100, -100));
+      node->rotate(-45, vec3(1, 0, 0));
+      node->rotate(-180, vec3(0, 1, 0));
+      _light->set_color(vec4(1, 1, 1, 1));
+      _light->set_kind(atom_directional);
+      li->set_node(node);
+      li->set_light(_light);
+      app_scene->add_light_instance(li);
 
       app_scene->create_default_camera_and_lights();
       app_scene->get_camera_instance(0)->set_far_plane(10000);
@@ -81,6 +66,17 @@ namespace octet {
       wave_geometry->init(app_scene);
 
       create_skybox();
+
+      TwInit(TW_OPENGL, NULL);
+      TwWindowSize(768, 912 + 100);
+
+      bar_ = TwNewBar("Wave Parameters");
+
+      TwAddVarRW(bar_, "Amplitude", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].amplitude, " label='Amplitude' Min=0.01f ");
+      TwAddVarRW(bar_, "Frequency", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].frequency, "");
+      TwAddVarRW(bar_, "Speed", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].speed, "");
+      TwAddVarRW(bar_, "Steepness", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].steepness, "");
+
     }
 
     /// this is called to draw the world
@@ -102,6 +98,7 @@ namespace octet {
       keyboard_inputs();
       mouse_inputs();
 
+      TwDraw(); //update ui
     }
 
 #pragma region inputs
@@ -158,6 +155,8 @@ namespace octet {
 
       if (is_key_down(key_esc)){
         exit(0);
+        //uninitialize AntTweakBar
+        TwTerminate();
       }
 
       if (is_key_down(key::key_shift) && is_key_down('W'))
@@ -182,22 +181,36 @@ namespace octet {
       //mouse control using x and y pos of mouse
       int x, y;
       get_mouse_pos(x, y);
+      //AntTweakBar stuff
+      TwMouseMotion(x, y);
+      if (is_key_going_down(key_lmb))
+      {
+        TwMouseButton(TW_MOUSE_PRESSED, TW_MOUSE_LEFT);
+      }
+      //NEED THIS
+      if (!is_key_down(key_lmb) && get_prev_keys()[key_lmb] != 0)
+      {
+        TwMouseButton(TW_MOUSE_RELEASED, TW_MOUSE_LEFT);
+      }
+      //AntTweakBar stuff end
       int vx, vy;
       get_viewport_size(vx, vy);
+      
 
       mat4t modelToWorld;
-
-      mat4t &camera_mat = camera->get_node()->access_nodeToParent();
-      modelToWorld.loadIdentity();
-      modelToWorld[3] = vec4(camera_mat.w().x(), camera_mat.w().y(), camera_mat.w().z(), 1);
-      modelToWorld.rotateY((float)-x*2.0f);
-      if (vy / 2 - y < 70 && vy / 2 - y > -70)
-        modelToWorld.rotateX((float)vy / 2 - y);
-      if (vy / 2 - y >= 70)
-        modelToWorld.rotateX(70);
-      if (vy / 2 - y <= -70)
-        modelToWorld.rotateX(-70);
-      camera_mat = modelToWorld;//apply to the node
+      if (is_key_down(key_shift)){
+        mat4t &camera_mat = camera->get_node()->access_nodeToParent();
+        modelToWorld.loadIdentity();
+        modelToWorld[3] = vec4(camera_mat.w().x(), camera_mat.w().y(), camera_mat.w().z(), 1);
+        modelToWorld.rotateY((float)-x*2.0f);
+        if (vy / 2 - y < 70 && vy / 2 - y > -70)
+          modelToWorld.rotateX((float)vy / 2 - y);
+        if (vy / 2 - y >= 70)
+          modelToWorld.rotateX(70);
+        if (vy / 2 - y <= -70)
+          modelToWorld.rotateX(-70);
+        camera_mat = modelToWorld;//apply to the node
+      }
     }
 
 #pragma endregion

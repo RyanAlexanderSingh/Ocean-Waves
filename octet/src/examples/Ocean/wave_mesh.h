@@ -38,19 +38,18 @@ namespace octet{
     };
 
     //our array of sine waves
-    dynarray<sine_wave> sine_waves;
-    dynarray<std::string> params;
+
     ref<visual_scene> the_app;
     mesh *water;
 
     float freq_ = 0.0f, ampli_ = 0.0f, speed_ = 0.0f, steepness_ = 0.0f;
-    int num_of_waves = 1.0f; //change this
+    int num_of_waves = 5; 
     size_t mesh_size = 120; //size of our mesh
     unsigned long long time_step = 0; //the simulation could go on for a really long time
 
     random rand; // random number for wave pos
 
-    vec3 gerstner_wave_function(int x_pos, int y_pos){
+    vec3 gerstner_wave_position(int x_pos, int y_pos){
       //store the Gerstner wave function to a vector
       vec3 wavePosition;
 
@@ -59,7 +58,6 @@ namespace octet{
         sine_wave wave = sine_waves[i];
 
         float angle = (wave.frequency * wave.direction.dot(vec3(x_pos, y_pos, 0.0f))) + wave.speed * time_step;
-
         //add to our position vector
         wavePosition.x() += (wave.steepness * wave.amplitude) * wave.direction.x() * cosf(angle);
         wavePosition.y() += (wave.steepness * wave.amplitude) * wave.direction.y() * cosf(angle);
@@ -68,14 +66,28 @@ namespace octet{
       return wavePosition;
     }
 
-    static uint32_t make_color(vec3 col) {
-      return 0xff000000 + ((int)(col.x()*255.0f) << 0) + ((int)(col.y()*255.0f) << 8) + ((int)(col.z()*255.0f) << 16);
+    vec3 gerstner_wave_normals(int x_pos, int y_pos, vec3 point_position){
+      //store the Gerstner wave function to a vector
+      vec3 normal = vec3(0.0f, 0.0f, 1.0f);
+
+      //for each sine wave
+      for (unsigned i = 0; i < sine_waves.size(); ++i){
+        sine_wave wave = sine_waves[i];
+
+        float height_term = wave.frequency * wave.amplitude;
+        
+        float radians = wave.frequency * wave.direction.dot(point_position) + +wave.speed * time_step;
+
+        float steepness = wave.steepness / (wave.speed * sine_waves.size());
+        float x_pos = -height_term * wave.direction.x() * cosf(radians);
+        float y_pos = -height_term * wave.direction.y() * cosf(radians);
+        float z_pos = -steepness * height_term * sinf(radians);
+        normal += vec3(x_pos, y_pos, z_pos);
+      }
+      return normal;
     }
 
-    // this function converts three floats into a RGBA 8 bit color
-    static uint32_t make_color(float r, float g, float b) {
-      return 0xff000000 + ((int)(r*255.0f) << 0) + ((int)(g*255.0f) << 8) + ((int)(b*255.0f) << 16);
-    }
+
 
     //generate the wave simulation by making the sine waves
     void generate_waves(){
@@ -97,6 +109,8 @@ namespace octet{
 
   public:
     wave_mesh(){}
+
+    dynarray<sine_wave> sine_waves;
 
     //we're going to want an init function
     void init(visual_scene *vs){
@@ -145,9 +159,10 @@ namespace octet{
       // make the vertices
       for (size_t i = 0; i != mesh_size; ++i) {
         for (size_t j = 0; j != mesh_size; ++j) {
-          vec3 wavePosition = gerstner_wave_function(j, i);
+          vec3 wavePosition = gerstner_wave_position(j, i);
           vtx->pos = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
-          vtx->norm = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
+          vec3 normalPosition = gerstner_wave_normals(j, i, wavePosition);
+          vtx->norm = vec3p(normalPosition);
           vtx++;
         }
       }
@@ -232,13 +247,13 @@ namespace octet{
         
         file << "Custom Configuration File\n";
         file << "Amplitude:\n";
-        file << ampli_ << std::endl;
+        file << sine_waves[0].amplitude << std::endl;
         file << "Frequency:\n";
-        file << freq_ << std::endl;
+        file << sine_waves[0].frequency << std::endl;
         file << "Speed:\n";
-        file << speed_ << std::endl;
+        file << sine_waves[0].speed << std::endl;
         file << "Steepness:\n";
-        file << steepness_ << std::endl;
+        file << sine_waves[0].steepness << std::endl;
 
         file.close(); //we don't need the file anymore
         printf("File has been saved\n");
