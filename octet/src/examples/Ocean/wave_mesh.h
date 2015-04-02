@@ -76,15 +76,14 @@ namespace octet{
       for (unsigned i = 0; i < sine_waves.size(); ++i){
         sine_wave wave = sine_waves[i];
 
-        float height_term = wave.frequency * wave.amplitude;
-        
-        float radians = wave.frequency * wave.direction.dot(point_position) + +wave.speed * time_step;
+       
+        float radians = wave.frequency * wave.direction.dot(point_position) + wave.speed * time_step;
 
-        float steepness = wave.steepness / (wave.speed * sine_waves.size());
         float x_pos = -(wave.steepness * wave.amplitude) * wave.direction.x() * cosf(radians);
         float y_pos = -(wave.steepness * wave.amplitude) * wave.direction.y() * cosf(radians);
-        float z_pos = -steepness * (wave.steepness * wave.amplitude) * sinf(radians);
+        float z_pos = (wave.steepness * wave.amplitude) * sinf(radians);
         normal += vec3(x_pos, y_pos, z_pos);
+        normal.normalize();
       }
       return normal;
     }
@@ -132,8 +131,8 @@ namespace octet{
 
       // describe the structure of my_vertex to OpenGL
       water->add_attribute(attribute_pos, 3, GL_FLOAT, 0);
-      water->add_attribute(attribute_normal, 3, GL_FLOAT, 0);
-      water->add_attribute(attribute_color, 4, GL_UNSIGNED_BYTE, 12, GL_TRUE);
+      water->add_attribute(attribute_normal, 3, GL_FLOAT, 12);
+      water->add_attribute(attribute_color, 4, GL_UNSIGNED_BYTE, 24, GL_TRUE);
 
       //generate our default waves ->> reading in first text file with default params
       generate_waves();
