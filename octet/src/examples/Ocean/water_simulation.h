@@ -95,8 +95,6 @@ namespace octet {
       TwAddVarRW(tweakBar, "Steepness", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].steepness, "Step=0.1f Min=0.0f Max=1.0f");
       TwAddVarRW(tweakBar, "Direction", TW_TYPE_FLOAT, &wave_geometry->sine_waves[0].dRotation, "Step=0.1f");
       TwAddVarRW(tweakBar, "Ocean Colour", TW_TYPE_COLOR3F, &wave_geometry->sine_waves[0].colour, " label='Ocean Colour' ");
-
-
     }
 
     /// this is called to draw the world

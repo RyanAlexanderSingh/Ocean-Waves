@@ -42,17 +42,23 @@ namespace octet{
       vec3 colour;
     };
 
-    //our array of sine waves
-
     ref<visual_scene> the_app;
     mesh *water;
 
     float freq_ = 0.0f, ampli_ = 0.0f, speed_ = 0.0f, steepness_ = 0.0f;
-    int num_of_waves = 5; 
+    int num_of_waves = 5;
     size_t mesh_size = 120; //size of our mesh
     unsigned long long time_step = 0; //the simulation could go on for a really long time
 
     random rand; // random number for wave pos
+
+    // this function converts three floats into a RGBA 8 bit color
+    static uint32_t make_color(vec3 colour) {
+      float r = colour.x();
+      float g = colour.y();
+      float b = colour.z();
+      return 0xff000000 + ((int)(r*255.0f) << 0) + ((int)(g*255.0f) << 8) + ((int)(b*255.0f) << 16);
+    }
 
     vec3 gerstner_wave_position(int x_pos, int y_pos){
       //store the Gerstner wave function to a vector
@@ -77,7 +83,7 @@ namespace octet{
       //for each sine wave
       for (unsigned i = 0; i < sine_waves.size(); ++i){
         sine_wave wave = sine_waves[i];
-       
+
         float radians = wave.frequency * wave.direction.dot(point_position) + wave.speed * time_step;
 
         normal.x() += (wave.steepness * wave.amplitude) * wave.direction.x() * cosf(radians);
@@ -101,8 +107,9 @@ namespace octet{
         sineWave.speed = speed_;
         sineWave.frequency = freq_;
         sineWave.steepness = steepness_;
-        sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f),
-          sine_waves.push_back(sineWave); //add to dynarray
+        sineWave.direction = vec3(rand.get(-1.0f, 1.0f), rand.get(-1.0f, 1.0f), 0.0f);
+        sineWave.colour = vec3(0.0f, 0.3f, 1.0f);
+        sine_waves.push_back(sineWave); //add to dynarray
       }
     }
 
@@ -115,8 +122,8 @@ namespace octet{
     void init(visual_scene *vs){
 
       this->the_app = vs;
-      param_shader *shader = new param_shader("shaders/default.vs", "shaders/default_solid.fs");
-      material *water_material = new material(vec4(0.0f, 0.3f, 1.0f, 1), shader);
+      param_shader *shader = new param_shader("shaders/default.vs", "shaders/ocean_shader.fs");
+      material *water_material = new material(vec4(1.0f, 0.0f, 0.0f, 1), shader);
 
       //create a mesh object
       water = new mesh();
@@ -162,6 +169,7 @@ namespace octet{
           vtx->pos = vec3p(vec3(1.0f * j, -1.0f * i, 0.0f) + wavePosition);
           vec3 normalPosition = gerstner_wave_normals(wavePosition);
           vtx->normal = vec3p(wavePosition);
+          vtx->color = make_color(sine_waves[0].colour);
           vtx++;
         }
       }
@@ -243,7 +251,7 @@ namespace octet{
       //if it exists
       if (file.is_open()){
         printf("\nWriting to custom configuration file...\n");
-        
+
         file << "Custom Configuration File\n";
         file << "Amplitude:\n";
         file << sine_waves[0].amplitude << std::endl;
